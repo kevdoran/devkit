@@ -1,0 +1,42 @@
+# To use this docker composition:
+#
+#    cd /path/to/devkit/docker/ranger/
+#    docker-compose up
+#
+
+version: '3.7'
+services:
+  postgres:
+    build: 
+      context: ../../postgres/
+      # cache_from: 
+      #  - alpine:3.8
+      #  - postgres:10.4-alpine
+    image: kevdoran/dk-postgres
+    # volumes:
+    #   - type: tmpfs
+    #     target: /var/lib/postgresql:rw
+    #     tmpfs:
+    #       size: 1000000000
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+  ranger:
+    build: 
+      context: ../../ranger/
+      # To use Koji's branch with the NiFi Registry Service plugin, enable these args
+      args:
+        SOURCE_REPO: https://github.com/kevdoran/ranger.git
+        SOURCE_BRANCH: nifi-registry
+        RANGER_VERSION: 2.0.0-SNAPSHOT
+    image: kevdoran/dk-ranger
+    volumes:
+      - ../../../keys/DevKit_Root_CA/servers/ranger:/opt/keys:cached
+    stdin_open: true
+    tty: true
+    depends_on:
+      - "postgres"
+    ports:
+      - "6080:6080"
